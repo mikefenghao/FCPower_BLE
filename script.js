@@ -103,7 +103,7 @@ class BLEManager {
                     const newDevice = await navigator.bluetooth.requestDevice({
                         filters: [
                             { namePrefix: 'JDY' },
-                            { namePrefix: 'FCPower' }
+                            { namePrefix: 'FC' }
                         ],
                         optionalServices: ['battery_service', 'device_information']
                     });
@@ -118,11 +118,20 @@ class BLEManager {
                     // 自动选择新发现的设备
                     deviceSelect.value = newDevice.id;
                     this.selectedDevice = newDevice;
+
+                    // 自动打开下拉框
+                    deviceSelect.size = Math.min(this.deviceList.length + 1, 5);
+                    deviceSelect.focus();
+
+                    // 3秒后恢复下拉框
+                    setTimeout(() => {
+                        deviceSelect.size = 1;
+                    }, 3000);
                 } catch (error) {
                     console.error('扫描设备失败:', error);
 
                     if (error.name === 'NotFoundError') {
-                        alert('未找到包含"JDY"或"FCPower"的设备。
+                        alert('未找到包含"JDY"或"FC"的设备。
 
 ' +
                               '请确保：
@@ -131,11 +140,20 @@ class BLEManager {
 ' +
                               '2. 设备在附近且未与其他设备连接
 ' +
-                              '3. 设备名称包含"JDY"或"FCPower"');
+                              '3. 设备名称包含"JDY"或"FC"');
                     } else {
                         alert('扫描设备失败: ' + error.message);
                     }
                 }
+            } else {
+                // 如果找到了设备，也自动打开下拉框
+                deviceSelect.size = Math.min(this.deviceList.length + 1, 5);
+                deviceSelect.focus();
+
+                // 3秒后恢复下拉框
+                setTimeout(() => {
+                    deviceSelect.size = 1;
+                }, 3000);
             }
 
             // 恢复扫描按钮状态
