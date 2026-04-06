@@ -84,7 +84,7 @@ class BLEManager {
                     // 过滤包含"JDY"或"FCPower"的设备
                     devices.forEach(device => {
                         const deviceName = device.name || '';
-                        if (deviceName.includes('JDY') || deviceName.includes('FCPower')) {
+                        if (deviceName.includes('JDY') || deviceName.includes('FC')) {
                             this.deviceList.push(device);
                             const option = document.createElement('option');
                             option.value = device.id;
