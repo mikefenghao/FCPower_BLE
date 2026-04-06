@@ -1,0 +1,144 @@
+/* 完整优化版 style.css */
+:root {
+    --bg-color: #0b0e14;
+    --card-bg: #161b26;
+    --accent-cyan: #00e5ff;
+    --accent-yellow: #ffcc00;
+    --accent-green: #00ff88;
+    --text-primary: #f0f2f5;
+    --text-secondary: #94a3b8;
+    --border: #2d3748;
+    --danger: #ff4d4d;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: -apple-system, "SF Pro Display", sans-serif;
+    margin: 0; padding: 10px;
+}
+
+/* 顶部工具栏 */
+.conn-toolbar {
+    display: flex; gap: 8px;
+    background: var(--card-bg);
+    padding: 10px; border-radius: 12px;
+    margin-bottom: 8px; align-items: center;
+    border: 1px solid var(--border);
+}
+
+.device-dropdown {
+    flex-grow: 1; background: #000;
+    color: var(--accent-cyan); border: 1px solid var(--border);
+    padding: 8px; border-radius: 6px; font-size: 13px;
+}
+
+.btn { padding: 8px 12px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+.btn-scan { background: var(--accent-cyan); color: #000; }
+.btn-connect { background: var(--accent-green); color: #000; }
+.btn-disconnect { background: #475569; color: #fff; }
+
+/* 新增：状态快速指示栏 */
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 5px 12px 5px; /* 只留底部间距 */
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-secondary);
+    font-size: 11px;
+}
+
+.status-item ion-icon {
+    font-size: 14px;
+}
+
+/* 状态激活时的变色类 (后续JS调用) */
+.status-item.active-ble { color: var(--accent-cyan); }
+.status-item.active-out { color: var(--accent-green); }
+.status-item.active-error { color: var(--danger); }
+
+/* 监控网格 */
+.monitor-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-bottom: 12px; width: 100%; box-sizing: border-box;
+}
+
+.card {
+    background: var(--card-bg); padding: 12px;
+    border-radius: 12px; border: 1px solid var(--border);
+}
+
+.card-title {
+    font-size: 10px; color: var(--text-secondary);
+    text-transform: uppercase; margin: 0 0 10px 0; letter-spacing: 1px;
+}
+
+.data-group { display: flex; flex-direction: column; gap: 10px; }
+.data-item { display: flex; justify-content: space-between; align-items: center; }
+.data-item label { font-size: 12px; color: var(--text-secondary); }
+
+.value { 
+    font-family: 'Monaco', monospace; font-size: 16px; font-weight: bold; 
+    white-space: nowrap; transition: color 0.3s ease;
+}
+.value small { font-size: 10px; margin-left: 2px; color: var(--text-secondary); }
+.cyan { color: var(--accent-cyan); }
+.yellow { color: var(--accent-yellow); }
+
+/* 控制面板 */
+.control-panel {
+    background: var(--card-bg); padding: 15px;
+    border-radius: 12px; border: 1px solid var(--border);
+    margin-bottom: 15px;
+}
+.slider-box { margin-bottom: 15px; }
+.slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
+.num-input { background: #000; border: 1px solid var(--border); color: var(--accent-cyan); width: 65px; text-align: right; border-radius: 4px; padding: 4px 6px; font-size: 14px; }
+input[type="range"] { width: 100%; accent-color: var(--accent-cyan); cursor: pointer; }
+
+/* 模式切换 & 开关 */
+.mode-selection {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin: 15px 0; padding: 4px; background: rgba(0, 0, 0, 0.2); border-radius: 10px;
+}
+.btn-mode {
+    background: transparent; border: 1px solid transparent; color: var(--text-secondary);
+    padding: 8px; border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px;
+}
+.btn-mode.active { background: rgba(0, 229, 255, 0.15); border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.action-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btn-power { padding: 12px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
+.on { background: var(--accent-green); color: #000; }
+.off { background: #334155; color: #fff; }
+
+/* 系统底层参数 */
+.system-params-card { margin-bottom: 15px; }
+.params-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.param-item { display: flex; flex-direction: column; gap: 2px; }
+.param-item label { font-size: 10px; color: var(--text-secondary); }
+.param-item span { font-family: 'Monaco', monospace; font-size: 12px; color: var(--text-primary); }
+
+/* 仪表校准区块 (置底) */
+.calib-card { margin-bottom: 40px; }
+.calib-grid { display: flex; flex-direction: column; gap: 12px; }
+.calib-header { display: flex; align-items: center; gap: 6px; }
+.calib-header label { font-size: 12px; color: var(--text-secondary); }
+.calib-input-group { display: flex; gap: 8px; }
+.calib-input-group .num-input { flex-grow: 1; text-align: left; padding-left: 8px; }
+.btn-cal { background: transparent; border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 12px; padding: 4px 12px; }
+
+/* 问号提示 */
+.help-tip { position: relative; display: flex; align-items: center; color: var(--text-secondary); cursor: help; }
+.help-tip::after {
+    content: attr(data-tip); position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%);
+    width: 150px; padding: 8px; background: #2d3748; color: #fff; font-size: 11px; border-radius: 6px; 
+    border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 100;
+    opacity: 0; visibility: hidden; transition: all 0.2s ease; pointer-events: none; line-height: 1.4;
+}
+.help-tip:hover::after, .help-tip:active::after { opacity: 1; visibility: visible; bottom: 120%; }

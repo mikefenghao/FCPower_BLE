@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCPower-120 Pro</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="conn-toolbar">
+            <button class="btn btn-scan" id="scan-btn"><ion-icon name="search-outline"></ion-icon> 扫描</button>
+            <select id="device-select" class="device-dropdown"><option value="">未选择设备...</option></select>
+            <button class="btn btn-connect" id="connect-btn">连接</button>
+            <button class="btn btn-disconnect" id="disconnect-btn">断开</button>
+        </header>
+
+        <div class="status-bar">
+            <div class="status-item" id="stat-ble">
+                <ion-icon name="bluetooth-outline"></ion-icon>
+                <span class="stat-text">未连接</span>
+            </div>
+            <div class="status-item" id="stat-out">
+                <ion-icon name="power-outline"></ion-icon>
+                <span class="stat-text">已关闭</span>
+            </div>
+            <div class="status-item" id="stat-rssi">
+                <ion-icon name="cellular-outline"></ion-icon>
+                <span class="stat-text">-- dBm</span>
+            </div>
+            <div class="status-item" id="stat-ver">
+                <ion-icon name="code-working-outline"></ion-icon>
+                <span class="stat-text">v1.0</span>
+            </div>
+        </div>
+
+        <main class="monitor-grid">
+            <section class="card output-card">
+                <h2 class="card-title">输出监控 (Output)</h2>
+                <div class="data-group">
+                    <div class="data-item"><label>电压</label><span class="value cyan" id="out-v">5.000<small>V</small></span></div>
+                    <div class="data-item"><label>电流</label><span class="value cyan" id="out-i">0.100<small>A</small></span></div>
+                    <div class="data-item"><label>功率</label><span class="value" id="out-p">0.50<small>W</small></span></div>
+                    <div class="data-item"><label>温度</label><span class="value" id="out-temp">35.6<small>℃</small></span></div>
+                    <div class="data-item"><label>效率</label><span class="value" id="out-eff">92.5<small>%</small></span></div>
+                </div>
+            </section>
+
+            <section class="card input-card">
+                <h2 class="card-title">输入监控 (Input)</h2>
+                <div class="data-group">
+                    <div class="data-item"><label>电压</label><span class="value yellow" id="in-v">19.99<small>V</small></span></div>
+                    <div class="data-item"><label>电流</label><span class="value yellow" id="in-i">0.030<small>A</small></span></div>
+                    <div class="data-item"><label>功率</label><span class="value" id="in-p">0.60<small>W</small></span></div>
+                    <div class="data-item"><label>累计</label><span class="value" id="in-mah">12<small>mAh</small></span></div>
+                    <div class="data-item"><label>能量</label><span class="value" id="in-mwh">240<small>mWh</small></span></div>
+                </div>
+            </section>
+        </main>
+
+        <section class="control-panel">
+            <div class="slider-box">
+                <div class="slider-header"><span>设定电压 (V)</span><input type="number" value="5.00" class="num-input" id="v-set-num"></div>
+                <input type="range" min="0" max="60" step="0.1" value="5" id="v-slider">
+            </div>
+            <div class="slider-box">
+                <div class="slider-header"><span>设定电流 (A)</span><input type="number" value="3.00" class="num-input" id="i-set-num"></div>
+                <input type="range" min="0" max="20" step="0.05" value="3" id="i-slider">
+            </div>
+            <div class="slider-box">
+                <div class="slider-header"><span>设定功率 (W)</span><input type="number" value="100.0" class="num-input" id="p-set-num"></div>
+                <input type="range" min="0" max="120" step="1" value="100" id="p-slider">
+            </div>
+            <div class="mode-selection">
+                <button class="btn-mode active" id="cc-mode-btn"><ion-icon name="infinite-outline"></ion-icon> 恒流模式</button>
+                <button class="btn-mode" id="ocp-mode-btn"><ion-icon name="warning-outline"></ion-icon> 过流模式</button>
+            </div>
+            <div class="action-footer">
+                <button class="btn-power on" id="on-btn">打开输出</button>
+                <button class="btn-power off" id="off-btn">关闭输出</button>
+            </div>
+        </section>
+
+        <section class="card system-params-card">
+            <div class="card-header-action">
+                <h2 class="card-title">系统底层参数 (System Internal)</h2>
+                <button class="btn btn-refresh" id="get-params-btn"><ion-icon name="refresh-outline"></ion-icon> 获取参数</button>
+            </div>
+            <div class="params-grid">
+                <div class="param-item"><label>MCU电压</label><span id="mcu-v">-- <small>V</small></span></div>
+                <div class="param-item"><label>MCU温度</label><span id="mcu-temp">-- <small>℃</small></span></div>
+                <div class="param-item"><label>版本号</label><span id="sw-ver">--</span></div>
+                <div class="param-item"><label>出压比</label><span id="ratio-out-v">--</span></div>
+                <div class="param-item"><label>入压比</label><span id="ratio-in-v">--</span></div>
+                <div class="param-item"><label>出流比</label><span id="ratio-out-i">--</span></div>
+                <div class="param-item"><label>芯片压比</label><span id="ratio-chip-v">--</span></div>
+                <div class="param-item"><label>芯片流比</label><span id="ratio-chip-i">--</span></div>
+            </div>
+        </section>
+
+        <section class="card calib-card">
+            <h2 class="card-title">仪表校准 (Calibration)</h2>
+            <div class="calib-grid">
+                <div class="calib-item">
+                    <div class="calib-header">
+                        <label>校准输入电压</label>
+                        <div class="help-tip" data-tip="用万用表测输入端实际电压，填入后点校准">
+                            <ion-icon name="help-circle-outline"></ion-icon>
+                        </div>
+                    </div>
+                    <div class="calib-input-group">
+                        <input type="number" placeholder="测量值" class="num-input" id="cal-in-v">
+                        <button class="btn btn-cal" id="btn-cal-in-v">校准</button>
+                    </div>
+                </div>
+                <div class="calib-item">
+                    <div class="calib-header">
+                        <label>校准输出电压</label>
+                        <div class="help-tip" data-tip="测输出端实际电压，填入值以修正显示误差">
+                            <ion-icon name="help-circle-outline"></ion-icon>
+                        </div>
+                    </div>
+                    <div class="calib-input-group">
+                        <input type="number" placeholder="测量值" class="num-input" id="cal-out-v">
+                        <button class="btn btn-cal" id="btn-cal-out-v">校准</button>
+                    </div>
+                </div>
+                <div class="calib-item">
+                    <div class="calib-header">
+                        <label>校准输出电流</label>
+                        <div class="help-tip" data-tip="串联万用表测电流，填入值以修正显示误差">
+                            <ion-icon name="help-circle-outline"></ion-icon>
+                        </div>
+                    </div>
+                    <div class="calib-input-group">
+                        <input type="number" placeholder="测量值" class="num-input" id="cal-out-i">
+                        <button class="btn btn-cal" id="btn-cal-out-i">校准</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
