@@ -33,7 +33,35 @@ class BLEManager {
         try {
             // 检查浏览器是否支持Web Bluetooth API
             if (!navigator.bluetooth) {
-                alert('您的浏览器不支持Web Bluetooth API，请使用Chrome或Edge浏览器。');
+                const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+                let browserInfo = '';
+
+                // 检测浏览器类型
+                if (/android/i.test(userAgent)) {
+                    browserInfo = 'Android系统';
+                } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+                    browserInfo = 'iOS系统';
+                } else if (/Chrome/.test(userAgent)) {
+                    browserInfo = 'Chrome浏览器';
+                } else if (/Edge/.test(userAgent)) {
+                    browserInfo = 'Edge浏览器';
+                } else {
+                    browserInfo = '当前浏览器';
+                }
+
+                alert(`您的${browserInfo}不支持Web Bluetooth API。
+
+` +
+                      `解决方案：
+` +
+                      `1. Android设备：请使用最新版Chrome或Edge浏览器
+` +
+                      `2. iOS设备：Web Bluetooth API暂不支持，请考虑开发原生App
+` +
+                      `3. 桌面设备：请使用Chrome、Edge或Opera浏览器
+
+` +
+                      `注意：Web Bluetooth API需要HTTPS环境或localhost才能工作。`);
                 return;
             }
 
@@ -42,27 +70,34 @@ class BLEManager {
             scanBtn.disabled = true;
             scanBtn.innerHTML = '<ion-icon name="refresh-outline"></ion-icon> 扫描中...';
 
-            // 请求蓝牙设备
-            const devices = await navigator.bluetooth.getDevices();
-
             // 清空设备列表
             this.deviceList = [];
             const deviceSelect = document.getElementById('device-select');
             deviceSelect.innerHTML = '<option value="">未选择设备...</option>';
 
-            // 过滤包含"JDY"或"FCPower"的设备
-            devices.forEach(device => {
-                const deviceName = device.name || '';
-                if (deviceName.includes('JDY') || deviceName.includes('FCPower')) {
-                    this.deviceList.push(device);
-                    const option = document.createElement('option');
-                    option.value = device.id;
-                    option.textContent = `${deviceName} (${device.id})`;
-                    deviceSelect.appendChild(option);
-                }
-            });
+            // 检查是否支持getDevices方法
+            if (typeof navigator.bluetooth.getDevices === 'function') {
+                try {
+                    // 请求已配对的蓝牙设备
+                    const devices = await navigator.bluetooth.getDevices();
 
-            // 如果没有找到设备，尝试扫描新设备
+                    // 过滤包含"JDY"或"FCPower"的设备
+                    devices.forEach(device => {
+                        const deviceName = device.name || '';
+                        if (deviceName.includes('JDY') || deviceName.includes('FCPower')) {
+                            this.deviceList.push(device);
+                            const option = document.createElement('option');
+                            option.value = device.id;
+                            option.textContent = `${deviceName} (${device.id})`;
+                            deviceSelect.appendChild(option);
+                        }
+                    });
+                } catch (getDevicesError) {
+                    console.warn('获取已配对设备失败:', getDevicesError);
+                }
+            }
+
+            // 如果没有找到设备或getDevices不可用，尝试扫描新设备
             if (this.deviceList.length === 0) {
                 try {
                     const newDevice = await navigator.bluetooth.requestDevice({
@@ -85,7 +120,21 @@ class BLEManager {
                     this.selectedDevice = newDevice;
                 } catch (error) {
                     console.error('扫描设备失败:', error);
-                    alert('未找到包含"JDY"或"FCPower"的设备，请确保设备已开启蓝牙并在附近。');
+
+                    if (error.name === 'NotFoundError') {
+                        alert('未找到包含"JDY"或"FCPower"的设备。
+
+' +
+                              '请确保：
+' +
+                              '1. 设备已开启蓝牙
+' +
+                              '2. 设备在附近且未与其他设备连接
+' +
+                              '3. 设备名称包含"JDY"或"FCPower"');
+                    } else {
+                        alert('扫描设备失败: ' + error.message);
+                    }
                 }
             }
 
@@ -95,7 +144,21 @@ class BLEManager {
 
         } catch (error) {
             console.error('扫描蓝牙设备出错:', error);
-            alert('扫描蓝牙设备出错: ' + error.message);
+
+            // 提供更详细的错误信息
+            let errorMsg = '扫描蓝牙设备出错: ' + error.message;
+
+            if (error.name === 'SecurityError') {
+                errorMsg += '
+
+安全错误：请确保您的网页通过HTTPS访问或在localhost环境下运行。';
+            } else if (error.name === 'NotFoundError') {
+                errorMsg += '
+
+未找到设备：请确保设备已开启蓝牙并在附近。';
+            }
+
+            alert(errorMsg);
 
             // 恢复扫描按钮状态
             const scanBtn = document.getElementById('scan-btn');
@@ -234,25 +297,28 @@ const bleManager = new BLEManager();
 // 页面加载完成后检查是否有已连接的设备
 window.addEventListener('load', async () => {
     try {
-        const devices = await navigator.bluetooth.getDevices();
-        devices.forEach(device => {
-            if (device.gatt.connected) {
-                bleManager.device = device;
-                bleManager.server = device.gatt;
-                bleManager.connected = true;
-                bleManager.selectedDevice = device;
-                bleManager.updateConnectionStatus(true);
+        // 检查是否支持getDevices方法
+        if (typeof navigator.bluetooth.getDevices === 'function') {
+            const devices = await navigator.bluetooth.getDevices();
+            devices.forEach(device => {
+                if (device.gatt.connected) {
+                    bleManager.device = device;
+                    bleManager.server = device.gatt;
+                    bleManager.connected = true;
+                    bleManager.selectedDevice = device;
+                    bleManager.updateConnectionStatus(true);
 
-                // 更新设备选择下拉框
-                const deviceSelect = document.getElementById('device-select');
-                deviceSelect.innerHTML = '<option value="">未选择设备...</option>';
-                const option = document.createElement('option');
-                option.value = device.id;
-                option.textContent = `${device.name} (${device.id})`;
-                option.selected = true;
-                deviceSelect.appendChild(option);
-            }
-        });
+                    // 更新设备选择下拉框
+                    const deviceSelect = document.getElementById('device-select');
+                    deviceSelect.innerHTML = '<option value="">未选择设备...</option>';
+                    const option = document.createElement('option');
+                    option.value = device.id;
+                    option.textContent = `${device.name} (${device.id})`;
+                    option.selected = true;
+                    deviceSelect.appendChild(option);
+                }
+            });
+        }
     } catch (error) {
         console.error('检查已连接设备失败:', error);
     }
