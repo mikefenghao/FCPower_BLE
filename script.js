@@ -47,11 +47,246 @@ class BLEManager {
         const getParamsBtn = document.getElementById('get-params-btn');
         if (getParamsBtn) getParamsBtn.addEventListener('click', () => this.getSystemParams());
         
-        console.log('DOM事件监听器已绑定');
+        // 添加校准输入框事件监听，只允许输入数字
+        const calInV = document.getElementById('cal-in-v');
+        const calOutV = document.getElementById('cal-out-v');
+        const calOutI = document.getElementById('cal-out-i');
+        
+        if (calInV) calInV.addEventListener('input', (e) => this.filterNumberInput(e));
+        if (calOutV) calOutV.addEventListener('input', (e) => this.filterNumberInput(e));
+        if (calOutI) calOutI.addEventListener('input', (e) => this.filterNumberInput(e));
+        
+        // 添加校准按钮事件监听
+        const btnCalInV = document.getElementById('btn-cal-in-v');
+        const btnCalOutV = document.getElementById('btn-cal-out-v');
+        const btnCalOutI = document.getElementById('btn-cal-out-i');
+        const btnCalCcI = document.getElementById('btn-cal-cc-i');
+        
+        if (btnCalInV) btnCalInV.addEventListener('click', () => this.calibrateInputVoltage());
+        if (btnCalOutV) btnCalOutV.addEventListener('click', () => this.calibrateOutputVoltage());
+        if (btnCalOutI) btnCalOutI.addEventListener('click', () => this.calibrateOutputCurrent());
+        if (btnCalCcI) btnCalCcI.addEventListener('click', () => this.calibrateConstantCurrent());
+        
+        // 添加滑条事件监听器，实现实时显示
+        const vSlider = document.getElementById('v-slider');
+        const vSetNum = document.getElementById('v-set-num');
+        const iSlider = document.getElementById('i-slider');
+        const iSetNum = document.getElementById('i-set-num');
+        const pSlider = document.getElementById('p-slider');
+        const pSetNum = document.getElementById('p-set-num');
+        
+        if (vSlider && vSetNum) {
+            // 当滑条值改变时，更新显示框（除以1000）
+            vSlider.addEventListener('input', () => {
+                const value = parseInt(vSlider.value) / 1000;
+                vSetNum.value = value.toFixed(2);
+            });
+            
+            // 当显示框值改变时，更新滑条（乘以1000）
+            vSetNum.addEventListener('input', () => {
+                // 确保值在范围内
+                let value = parseFloat(vSetNum.value) * 1000;
+                if (isNaN(value)) value = 5000;
+                if (value < 2500) value = 2500;
+                if (value > 36000) value = 36000;
+                // 确保值是100的倍数
+                value = Math.round(value / 100) * 100;
+                vSetNum.value = (value / 1000).toFixed(2);
+                vSlider.value = value;
+                // 发送命令到设备
+                this.sendData(`SET_VOUT=${value}\r\n`);
+            });
+            
+            // 当滑条滑动松手时，发送命令到设备
+            vSlider.addEventListener('change', () => {
+                const value = vSlider.value;
+                this.sendData(`SET_VOUT=${value}\r\n`);
+            });
+        }
+        
+        if (iSlider && iSetNum) {
+            // 当滑条值改变时，更新显示框（除以1000）
+            iSlider.addEventListener('input', () => {
+                const value = parseInt(iSlider.value) / 1000;
+                iSetNum.value = value.toFixed(2);
+            });
+            
+            // 当显示框值改变时，更新滑条（乘以1000）
+            iSetNum.addEventListener('input', () => {
+                // 确保值在范围内
+                let value = parseFloat(iSetNum.value) * 1000;
+                if (isNaN(value)) value = 3000;
+                if (value < 300) value = 300;
+                if (value > 6000) value = 6000;
+                // 确保值是100的倍数
+                value = Math.round(value / 100) * 100;
+                iSetNum.value = (value / 1000).toFixed(2);
+                iSlider.value = value;
+                // 发送命令到设备
+                this.sendData(`SET_IOUT=${value}\r\n`);
+            });
+            
+            // 当滑条滑动松手时，发送命令到设备
+            iSlider.addEventListener('change', () => {
+                const value = iSlider.value;
+                this.sendData(`SET_IOUT=${value}\r\n`);
+            });
+        }
+        
+        if (pSlider && pSetNum) {
+            // 当滑条值改变时，更新显示框
+            pSlider.addEventListener('input', () => {
+                pSetNum.value = pSlider.value;
+            });
+            
+            // 当显示框值改变时，更新滑条
+            pSetNum.addEventListener('input', () => {
+                // 确保值在范围内
+                let value = parseInt(pSetNum.value);
+                if (isNaN(value)) value = 100;
+                if (value < 1) value = 1;
+                if (value > 120) value = 120;
+                pSetNum.value = value;
+                pSlider.value = value;
+                // 发送命令到设备
+                this.sendData(`SET_POUT=${value}\r\n`);
+            });
+            
+            // 当滑条滑动松手时，发送命令到设备
+            pSlider.addEventListener('change', () => {
+                const value = pSlider.value;
+                this.sendData(`SET_POUT=${value}\r\n`);
+            });
+        }
+        
+        // 初始化滑条和显示框的值
+        if (vSlider && vSetNum) {
+            const vValue = parseInt(vSlider.value) / 1000;
+            vSetNum.value = vValue.toFixed(2);
+        }
+        
+        if (iSlider && iSetNum) {
+            const iValue = parseInt(iSlider.value) / 1000;
+            iSetNum.value = iValue.toFixed(2);
+        }
+        
+        if (pSlider && pSetNum) {
+            pSetNum.value = pSlider.value;
+        }
+        
+        // console.log('DOM事件监听器已绑定');
+    }
+    
+    // 过滤输入，只允许数字
+    filterNumberInput(e) {
+        const input = e.target;
+        const value = input.value;
+        // 只保留数字
+        const filteredValue = value.replace(/[^0-9]/g, '');
+        // 如果值被修改了，更新输入框的值
+        if (value !== filteredValue) {
+            input.value = filteredValue;
+        }
+    }
+    
+    // 校准输入电压
+    async calibrateInputVoltage() {
+        if (!this.connected || !this.characteristic) {
+            alert('设备未连接');
+            return false;
+        }
+        
+        const calInV = document.getElementById('cal-in-v');
+        const value = calInV.value;
+        
+        if (!value) {
+            alert('请输入测量值');
+            return false;
+        }
+        
+        try {
+            await this.sendData(`AT+1=${value}\r\n`);
+            alert('校准输入电压命令已发送');
+            return true;
+        } catch (error) {
+            console.error('发送校准命令失败:', error);
+            alert('发送校准命令失败: ' + error.message);
+            return false;
+        }
+    }
+    
+    // 校准输出电压
+    async calibrateOutputVoltage() {
+        if (!this.connected || !this.characteristic) {
+            alert('设备未连接');
+            return false;
+        }
+        
+        const calOutV = document.getElementById('cal-out-v');
+        const value = calOutV.value;
+        
+        if (!value) {
+            alert('请输入测量值');
+            return false;
+        }
+        
+        try {
+            await this.sendData(`AT+2=${value}\r\n`);
+            alert('校准输出电压命令已发送');
+            return true;
+        } catch (error) {
+            console.error('发送校准命令失败:', error);
+            alert('发送校准命令失败: ' + error.message);
+            return false;
+        }
+    }
+    
+    // 校准输出电流
+    async calibrateOutputCurrent() {
+        if (!this.connected || !this.characteristic) {
+            alert('设备未连接');
+            return false;
+        }
+        
+        const calOutI = document.getElementById('cal-out-i');
+        const value = calOutI.value;
+        
+        if (!value) {
+            alert('请输入测量值');
+            return false;
+        }
+        
+        try {
+            await this.sendData(`AT+5=${value}\r\n`);
+            alert('校准输出电流命令已发送');
+            return true;
+        } catch (error) {
+            console.error('发送校准命令失败:', error);
+            alert('发送校准命令失败: ' + error.message);
+            return false;
+        }
+    }
+    
+    // 校准恒流值
+    async calibrateConstantCurrent() {
+        if (!this.connected || !this.characteristic) {
+            alert('设备未连接');
+            return false;
+        }
+        
+        try {
+            await this.sendData('AT+4=0\r\n');
+            alert('校准恒流值命令已发送');
+            return true;
+        } catch (error) {
+            console.error('发送校准命令失败:', error);
+            alert('发送校准命令失败: ' + error.message);
+            return false;
+        }
     }
 
     async scanDevices() {
-        console.log('开始执行扫描逻辑...');
+        // console.log('开始执行扫描逻辑...');
         try {
             if (!navigator.bluetooth) {
                 alert('您的浏览器不支持 Web Bluetooth API，请使用 Chrome 或 Edge 浏览器，并确保使用 HTTPS 访问。');
@@ -73,7 +308,7 @@ class BLEManager {
                 optionalServices: [this.SERVICE_UUID] // 使用正确的服务UUID
             });
 
-            console.log('找到设备:', device.name);
+            // console.log('找到设备:', device.name);
             
             this.deviceList = [device];
             this.selectedDevice = device;
@@ -87,7 +322,7 @@ class BLEManager {
             deviceSelect.appendChild(option);
             
             // 移除alert，提高用户体验
-            console.log('已选择设备: ' + (device.name || '未命名'));
+            // console.log('已选择设备: ' + (device.name || '未命名'));
 
         } catch (error) {
             console.error('扫描失败:', error);
@@ -115,11 +350,11 @@ class BLEManager {
         let retries = 3;
         while (retries > 0) {
             try {
-                console.log('正在连接 GATT 服务... (尝试 ' + (4 - retries) + '/3)');
+                // console.log('正在连接 GATT 服务... (尝试 ' + (4 - retries) + '/3)');
 
                 // 先断开之前的连接（如果有）
                 if (this.selectedDevice.gatt && this.selectedDevice.gatt.connected) {
-                    console.log('检测到已连接，先断开...');
+                    // console.log('检测到已连接，先断开...');
                     this.selectedDevice.gatt.disconnect();
                     // 增加等待时间，确保连接完全断开
                     await new Promise(resolve => setTimeout(resolve, 500));
@@ -131,7 +366,7 @@ class BLEManager {
                     setTimeout(() => reject(new Error('连接超时')), 15000)
                 );
                 this.server = await Promise.race([connectPromise, timeoutPromise]);
-                console.log('GATT服务器已连接');
+                // console.log('GATT服务器已连接');
 
                 // 等待一小段时间，确保连接稳定
                 await new Promise(resolve => setTimeout(resolve, 500));
@@ -147,7 +382,7 @@ class BLEManager {
                     setTimeout(() => reject(new Error('获取服务超时')), 8000)
                 );
                 const service = await Promise.race([servicePromise, serviceTimeoutPromise]);
-                console.log('服务获取成功');
+                // console.log('服务获取成功');
 
                 // 获取特征值 - 添加超时处理
                 const characteristicPromise = service.getCharacteristic(this.CHARACTERISTIC_UUID);
@@ -155,7 +390,7 @@ class BLEManager {
                     setTimeout(() => reject(new Error('获取特征值超时')), 8000)
                 );
                 this.characteristic = await Promise.race([characteristicPromise, characteristicTimeoutPromise]);
-                console.log('特征值获取成功');
+                // console.log('特征值获取成功');
 
                 // 启用通知 - 添加超时处理
                 const notificationPromise = this.characteristic.startNotifications();
@@ -163,7 +398,7 @@ class BLEManager {
                     setTimeout(() => reject(new Error('启用通知超时')), 8000)
                 );
                 await Promise.race([notificationPromise, notificationTimeoutPromise]);
-                console.log('通知已启用');
+                // console.log('通知已启用');
 
                 // 清除之前的事件监听器
                 this.characteristic.removeEventListener('characteristicvaluechanged', this.handleData);
@@ -178,7 +413,7 @@ class BLEManager {
                 console.error('连接失败:', error);
                 retries--;
                 if (retries > 0) {
-                    console.log('重试连接... (' + retries + ' 次尝试剩余)');
+                    // console.log('重试连接... (' + retries + ' 次尝试剩余)');
                     // 等待一段时间后重试
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 } else {
@@ -213,7 +448,7 @@ class BLEManager {
 
     // 处理设备断开连接事件
     handleDisconnect() {
-        console.log('设备已断开连接');
+        // console.log('设备已断开连接');
         this.connected = false;
         this.updateConnectionStatus(false);
     }
@@ -228,29 +463,28 @@ class BLEManager {
         const value = event.target.value;
         const decoder = new TextDecoder('utf-8');
         const text = decoder.decode(value);
-        console.log('收到数据片段:', text);
+        // console.log('收到数据片段:', text);
         
         // 将新数据添加到缓冲区
         this.dataBuffer += text;
         
-        // 检查缓冲区中是否有完整的数据包（以换行符结尾）
-        const newlineIndex = this.dataBuffer.indexOf('\n');
-        if (newlineIndex !== -1) {
+        // 检查缓冲区中是否包含完整的参数集（包含power_cc和power_out_stat）
+        if (this.dataBuffer.includes('power_cc') && this.dataBuffer.includes('power_out_stat')) {
             // 提取完整的数据包
-            const completeData = this.dataBuffer.substring(0, newlineIndex);
-            // 从缓冲区中移除已处理的数据
-            this.dataBuffer = this.dataBuffer.substring(newlineIndex + 1);
+            const completeData = this.dataBuffer;
+            // 清空缓冲区
+            this.dataBuffer = '';
             
-            console.log('完整数据包:', completeData);
-            console.log('数据是否包含power_cc:', completeData.includes('power_cc'));
-            console.log('数据是否包含power_out_stat:', completeData.includes('power_out_stat'));
+            // console.log('完整数据包:', completeData);
+            // console.log('数据是否包含power_cc:', completeData.includes('power_cc'));
+            // console.log('数据是否包含power_out_stat:', completeData.includes('power_out_stat'));
             
             // 解析功率数据
             const powerData = this.parsePowerData(completeData);
             if (powerData) {
-                console.log('解析后的数据:', powerData);
-                console.log('解析后的数据是否包含cc:', powerData.cc !== undefined);
-                console.log('解析后的数据是否包含out_stat:', powerData.out_stat !== undefined);
+                // console.log('解析后的数据:', powerData);
+                // console.log('解析后的数据是否包含cc:', powerData.cc !== undefined);
+                // console.log('解析后的数据是否包含out_stat:', powerData.out_stat !== undefined);
                 // 更新UI显示
                 this.updatePowerDisplay(powerData);
             }
@@ -258,7 +492,7 @@ class BLEManager {
             // 解析系统参数数据
             const systemParams = this.parseSystemParams(completeData);
             if (systemParams) {
-                console.log('解析后的系统参数:', systemParams);
+                // console.log('解析后的系统参数:', systemParams);
                 // 更新系统参数显示
                 this.updateSystemParams(systemParams);
             }
@@ -271,6 +505,9 @@ class BLEManager {
         // 使用正则表达式匹配所有键值对
         const regex = /power_(\w+)=(\d+\.?\d*)([VAWmAH]?)/g;
         let match;
+        
+        // 重置正则表达式的lastIndex
+        regex.lastIndex = 0;
 
         while ((match = regex.exec(text)) !== null) {
             const key = match[1]; // 如 vout, iout, pout等
@@ -290,9 +527,9 @@ class BLEManager {
                 value: parseInt(ccMatch[1]),
                 unit: ''
             };
-            console.log('解析到cc模式值:', data['cc'].value);
+            // console.log('解析到cc模式值:', data['cc'].value);
         } else {
-            console.log('未找到power_cc值');
+            // console.log('未找到power_cc值');
         }
 
         // 检查是否有输出状态值
@@ -302,9 +539,9 @@ class BLEManager {
                 value: parseInt(outStatMatch[1]),
                 unit: ''
             };
-            console.log('解析到输出状态值:', data['out_stat'].value);
+            // console.log('解析到输出状态值:', data['out_stat'].value);
         } else {
-            console.log('未找到power_out_stat值');
+            // console.log('未找到power_out_stat值');
         }
 
         // 检查是否有温度值
@@ -314,9 +551,9 @@ class BLEManager {
                 value: parseFloat(tempMatch[1]),
                 unit: '℃'
             };
-            console.log('解析到温度值:', data['temp'].value);
+            // console.log('解析到温度值:', data['temp'].value);
         } else {
-            console.log('未找到power_temp值');
+            // console.log('未找到power_temp值');
         }
 
         return Object.keys(data).length > 0 ? data : null;
@@ -330,63 +567,63 @@ class BLEManager {
         const powerMcuRefMatch = /power_mcu_ref=([\d.]+)/.exec(text);
         if (powerMcuRefMatch) {
             params['power_mcu_ref'] = parseFloat(powerMcuRefMatch[1]);
-            console.log('解析到MCU电压参考值:', params['power_mcu_ref']);
+            // console.log('解析到MCU电压参考值:', params['power_mcu_ref']);
         }
 
         // 匹配MCU输出电压比例
         const ratioMcuVoutMatch = /RATIO_MCU_VOUT=([\d.]+)/.exec(text);
         if (ratioMcuVoutMatch) {
             params['RATIO_MCU_VOUT'] = parseFloat(ratioMcuVoutMatch[1]);
-            console.log('解析到MCU输出电压比例:', params['RATIO_MCU_VOUT']);
+            // console.log('解析到MCU输出电压比例:', params['RATIO_MCU_VOUT']);
         }
 
         // 匹配MCU输入电压比例
         const ratioMcuVinMatch = /RATIO_MCU_VIN=([\d.]+)/.exec(text);
         if (ratioMcuVinMatch) {
             params['RATIO_MCU_VIN'] = parseFloat(ratioMcuVinMatch[1]);
-            console.log('解析到MCU输入电压比例:', params['RATIO_MCU_VIN']);
+            // console.log('解析到MCU输入电压比例:', params['RATIO_MCU_VIN']);
         }
 
         // 匹配MCU输出电流比例
         const ratioMcuIoutMatch = /RATIO_MCU_IOUT=([\d.]+)/.exec(text);
         if (ratioMcuIoutMatch) {
             params['RATIO_MCU_IOUT'] = parseFloat(ratioMcuIoutMatch[1]);
-            console.log('解析到MCU输出电流比例:', params['RATIO_MCU_IOUT']);
+            // console.log('解析到MCU输出电流比例:', params['RATIO_MCU_IOUT']);
         }
 
         // 匹配SC8815输出电压比例
         const ratioSc8815VoutMatch = /RATIO_SC8815_VOUT=([\d.]+)/.exec(text);
         if (ratioSc8815VoutMatch) {
             params['RATIO_SC8815_VOUT'] = parseFloat(ratioSc8815VoutMatch[1]);
-            console.log('解析到SC8815输出电压比例:', params['RATIO_SC8815_VOUT']);
+            // console.log('解析到SC8815输出电压比例:', params['RATIO_SC8815_VOUT']);
         }
 
         // 匹配SC8815输出电压比例（F）
         const ratioSc8815VoutFMatch = /RATIO_SC8815_VOUT_F=([\d.]+)/.exec(text);
         if (ratioSc8815VoutFMatch) {
             params['RATIO_SC8815_VOUT_F'] = parseFloat(ratioSc8815VoutFMatch[1]);
-            console.log('解析到SC8815输出电压比例（F）:', params['RATIO_SC8815_VOUT_F']);
+            // console.log('解析到SC8815输出电压比例（F）:', params['RATIO_SC8815_VOUT_F']);
         }
 
         // 匹配SC8815输出电流比例
         const ratioSc8815IoutMatch = /RATIO_SC8815_IOUT=([\d.]+)/.exec(text);
         if (ratioSc8815IoutMatch) {
             params['RATIO_SC8815_IOUT'] = parseFloat(ratioSc8815IoutMatch[1]);
-            console.log('解析到SC8815输出电流比例:', params['RATIO_SC8815_IOUT']);
+            // console.log('解析到SC8815输出电流比例:', params['RATIO_SC8815_IOUT']);
         }
 
         // 匹配软件版本
         const softVMatch = /soft_v=([\d.]+)/.exec(text);
         if (softVMatch) {
             params['soft_v'] = softVMatch[1];
-            console.log('解析到软件版本:', params['soft_v']);
+            // console.log('解析到软件版本:', params['soft_v']);
         }
 
         // 匹配MCU温度
         const powerMcutempMatch = /power_mcutemp=([\d.]+)/.exec(text);
         if (powerMcutempMatch) {
             params['power_mcutemp'] = parseFloat(powerMcutempMatch[1]);
-            console.log('解析到MCU温度:', params['power_mcutemp']);
+            // console.log('解析到MCU温度:', params['power_mcutemp']);
         }
 
         return Object.keys(params).length > 0 ? params : null;
@@ -419,35 +656,49 @@ class BLEManager {
     }
 
     // 切换输出状态
-    toggleOutput() {
-        const onBtn = document.getElementById('on-btn');
-        const offBtn = document.getElementById('off-btn');
-        if (!onBtn || !offBtn) return;
-        
-        // 检查当前按钮状态
-        const isOn = onBtn.classList.contains('on');
-        
-        // 更新按钮状态
-        if (isOn) {
-            // 当前是打开状态，切换到关闭
-            onBtn.classList.remove('on');
-            onBtn.classList.add('off');
-            offBtn.classList.remove('off');
-            offBtn.classList.add('on');
-            onBtn.textContent = '打开输出';
-            offBtn.textContent = '关闭输出';
-            // 发送关闭输出的命令
-            this.sendData('power_out_stat=0');
-        } else {
-            // 当前是关闭状态，切换到打开
-            onBtn.classList.remove('off');
-            onBtn.classList.add('on');
-            offBtn.classList.remove('on');
-            offBtn.classList.add('off');
-            onBtn.textContent = '打开输出';
-            offBtn.textContent = '关闭输出';
-            // 发送打开输出的命令
-            this.sendData('power_out_stat=1');
+    async toggleOutput() {
+        if (!this.connected || !this.characteristic) {
+            alert('设备未连接');
+            return false;
+        }
+
+        try {
+            const onBtn = document.getElementById('on-btn');
+            const offBtn = document.getElementById('off-btn');
+            if (!onBtn || !offBtn) return false;
+            
+            // 检查当前按钮状态
+            const isOn = onBtn.classList.contains('on');
+            
+            // 更新按钮状态
+            if (isOn) {
+                // 当前是打开状态，切换到关闭
+                onBtn.classList.remove('on');
+                onBtn.classList.add('off');
+                offBtn.classList.remove('off');
+                offBtn.classList.add('on');
+                onBtn.textContent = '打开输出';
+                offBtn.textContent = '关闭输出';
+                // 发送关闭输出的命令
+                await this.sendData('POWER_CLOSE=1\r\n');
+                // console.log('已发送关闭输出命令: POWER_OPEN=0\r\n');
+            } else {
+                // 当前是关闭状态，切换到打开
+                onBtn.classList.remove('off');
+                onBtn.classList.add('on');
+                offBtn.classList.remove('on');
+                offBtn.classList.add('off');
+                onBtn.textContent = '打开输出';
+                offBtn.textContent = '关闭输出';
+                // 发送打开输出的命令
+                await this.sendData('POWER_OPEN=1\r\n');
+                // console.log('已发送打开输出命令: POWER_OPEN=1\r\n');
+            }
+            return true;
+        } catch (error) {
+            console.error('发送输出命令失败:', error);
+            alert('发送输出命令失败: ' + error.message);
+            return false;
         }
     }
 
@@ -513,29 +764,29 @@ class BLEManager {
 
         // 更新恒流/过流模式按钮状态
         if (powerData.cc !== undefined) {
-            console.log('更新按钮状态, cc值:', powerData.cc.value);
+            // console.log('更新按钮状态, cc值:', powerData.cc.value);
             const ccModeBtn = document.getElementById('cc-mode-btn');
             const ocpModeBtn = document.getElementById('ocp-mode-btn');
             if (ccModeBtn && ocpModeBtn) {
                 if (powerData.cc.value === 0) {
                     // 恒流模式
-                    console.log('切换到恒流模式');
+                    // console.log('切换到恒流模式');
                     ccModeBtn.classList.add('active');
                     ocpModeBtn.classList.remove('active');
                 } else if (powerData.cc.value === 1) {
                     // 过流模式
-                    console.log('切换到过流模式');
+                    // console.log('切换到过流模式');
                     ocpModeBtn.classList.add('active');
                     ccModeBtn.classList.remove('active');
                 }
             } else {
-                console.log('未找到模式按钮元素');
+                // console.log('未找到模式按钮元素');
             }
         }
 
         // 更新输出状态
         if (powerData.out_stat !== undefined) {
-            console.log('更新输出状态, out_stat值:', powerData.out_stat.value);
+            // console.log('更新输出状态, out_stat值:', powerData.out_stat.value);
             const onBtn = document.getElementById('on-btn');
             const offBtn = document.getElementById('off-btn');
             const statOutput = document.getElementById('stat-out');
@@ -543,14 +794,14 @@ class BLEManager {
             if (onBtn && offBtn) {
                 if (powerData.out_stat.value === 1) {
                     // 输出打开
-                    console.log('输出已打开');
+                    // console.log('输出已打开');
                     onBtn.classList.remove('off');
                     onBtn.classList.add('on');
                     offBtn.classList.remove('on');
                     offBtn.classList.add('off');
                 } else {
                     // 输出关闭
-                    console.log('输出已关闭');
+                    // console.log('输出已关闭');
                     onBtn.classList.remove('on');
                     onBtn.classList.add('off');
                     offBtn.classList.remove('off');
@@ -580,7 +831,7 @@ class BLEManager {
             const encoder = new TextEncoder();
             const value = encoder.encode(data);
             await this.characteristic.writeValue(value);
-            console.log('发送数据:', data);
+            // console.log('发送数据:', data);
             return true;
         } catch (error) {
             console.error('发送数据失败:', error);
@@ -600,7 +851,7 @@ class BLEManager {
             const value = await this.characteristic.readValue();
             const decoder = new TextDecoder('utf-8');
             const text = decoder.decode(value);
-            console.log('读取数据:', text);
+            // console.log('读取数据:', text);
             return text;
         } catch (error) {
             console.error('读取数据失败:', error);
@@ -619,8 +870,7 @@ class BLEManager {
         try {
             // 发送获取参数命令
             await this.sendData('BLE_READ=1\r\n');
-            console.log('已发送获取参数命令: BLE_READ=1\r\n');
-            alert('已发送获取参数命令，请等待设备响应...');
+            // console.log('已发送获取参数命令: BLE_READ=1\r\n');
             return true;
         } catch (error) {
             console.error('发送获取参数命令失败:', error);
@@ -706,7 +956,7 @@ const startApp = () => {
             bleManager = new BLEManager();
             // 挂载到全局，方便你在控制台输入 bleManager 调试
             window.bleManager = bleManager; 
-            console.log('FCPower 蓝牙管理器已就绪');
+            // console.log('FCPower 蓝牙管理器已就绪');
         }
     } catch (e) {
         console.error('启动失败:', e);

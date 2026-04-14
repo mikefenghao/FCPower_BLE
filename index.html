@@ -61,16 +61,16 @@
 
         <section class="control-panel">
             <div class="slider-box">
-                <div class="slider-header"><span>设定电压 (V)</span><input type="number" value="5.00" class="num-input" id="v-set-num"></div>
-                <input type="range" min="0" max="60" step="0.1" value="5" id="v-slider">
+                <div class="slider-header"><span>设定电压 (V)</span><div class="input-with-unit"><input type="number" value="5.00" class="num-input" id="v-set-num"><span class="unit">V</span></div></div>
+                <input type="range" min="2500" max="36000" step="100" value="5000" id="v-slider">
             </div>
             <div class="slider-box">
-                <div class="slider-header"><span>设定电流 (A)</span><input type="number" value="3.00" class="num-input" id="i-set-num"></div>
-                <input type="range" min="0" max="20" step="0.05" value="3" id="i-slider">
+                <div class="slider-header"><span>设定电流 (A)</span><div class="input-with-unit"><input type="number" value="3.00" class="num-input" id="i-set-num"><span class="unit">A</span></div></div>
+                <input type="range" min="300" max="6000" step="100" value="3000" id="i-slider">
             </div>
             <div class="slider-box">
-                <div class="slider-header"><span>设定功率 (W)</span><input type="number" value="100.0" class="num-input" id="p-set-num"></div>
-                <input type="range" min="0" max="120" step="1" value="100" id="p-slider">
+                <div class="slider-header"><span>设定功率 (W)</span><div class="input-with-unit"><input type="number" value="100" class="num-input" id="p-set-num"><span class="unit">W</span></div></div>
+                <input type="range" min="1" max="120" step="1" value="100" id="p-slider">
             </div>
             <div class="mode-selection">
                 <button class="btn-mode active" id="cc-mode-btn"><ion-icon name="infinite-outline"></ion-icon> 恒流模式</button>
@@ -110,7 +110,7 @@
                         </div>
                     </div>
                     <div class="calib-input-group">
-                        <input type="number" placeholder="测量值" class="num-input" id="cal-in-v">
+                        <input type="text" placeholder="测量值" class="num-input" id="cal-in-v">
                         <button class="btn btn-cal" id="btn-cal-in-v">校准</button>
                     </div>
                 </div>
@@ -122,7 +122,7 @@
                         </div>
                     </div>
                     <div class="calib-input-group">
-                        <input type="number" placeholder="测量值" class="num-input" id="cal-out-v">
+                        <input type="text" placeholder="测量值" class="num-input" id="cal-out-v">
                         <button class="btn btn-cal" id="btn-cal-out-v">校准</button>
                     </div>
                 </div>
@@ -134,8 +134,20 @@
                         </div>
                     </div>
                     <div class="calib-input-group">
-                        <input type="number" placeholder="测量值" class="num-input" id="cal-out-i">
+                        <input type="text" placeholder="测量值" class="num-input" id="cal-out-i">
                         <button class="btn btn-cal" id="btn-cal-out-i">校准</button>
+                    </div>
+                </div>
+                <div class="calib-item">
+                    <div class="calib-header">
+                        <label>校准恒流值</label>
+                        <div class="help-tip" data-tip="设定恒流值后，用万用表测量实际电流，填入值以校准">
+                            <ion-icon name="help-circle-outline"></ion-icon>
+                        </div>
+                    </div>
+                    <div class="calib-input-group">
+                        <input type="number" placeholder="测量值" class="num-input" id="cal-cc-i" disabled>
+                        <button class="btn btn-cal" id="btn-cal-cc-i">校准</button>
                     </div>
                 </div>
             </div>

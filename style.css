@@ -101,6 +101,12 @@ body {
 .slider-box { margin-bottom: 15px; }
 .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
 .num-input { background: #000; border: 1px solid var(--border); color: var(--accent-cyan); width: 65px; text-align: right; border-radius: 4px; padding: 4px 6px; font-size: 14px; }
+
+.input-with-unit { position: relative; display: inline-block; }
+
+.input-with-unit .num-input { padding-right: 20px; }
+
+.input-with-unit .unit { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); color: var(--accent-cyan); font-size: 14px; pointer-events: none; }
 input[type="range"] { width: 100%; accent-color: var(--accent-cyan); cursor: pointer; }
 
 /* 模式切换 & 开关 */
