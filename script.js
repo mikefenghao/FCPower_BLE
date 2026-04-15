@@ -174,6 +174,23 @@ class BLEManager {
             pSetNum.value = pSlider.value;
         }
         
+        // 添加命令发送模块事件监听器
+        const commandSelect = document.getElementById('command-select');
+        const sendCommandBtn = document.getElementById('send-command-btn');
+        
+        if (commandSelect && sendCommandBtn) {
+            sendCommandBtn.addEventListener('click', () => {
+                const command = commandSelect.value;
+                if (command) {
+                    this.sendData(`${command}\r\n`);
+                    // 可选：显示发送成功提示
+                    alert('命令已发送: ' + command);
+                } else {
+                    alert('请选择要发送的命令');
+                }
+            });
+        }
+        
         // console.log('DOM事件监听器已绑定');
     }
     
@@ -476,15 +493,10 @@ class BLEManager {
             this.dataBuffer = '';
             
             // console.log('完整数据包:', completeData);
-            // console.log('数据是否包含power_cc:', completeData.includes('power_cc'));
-            // console.log('数据是否包含power_out_stat:', completeData.includes('power_out_stat'));
             
             // 解析功率数据
             const powerData = this.parsePowerData(completeData);
             if (powerData) {
-                // console.log('解析后的数据:', powerData);
-                // console.log('解析后的数据是否包含cc:', powerData.cc !== undefined);
-                // console.log('解析后的数据是否包含out_stat:', powerData.out_stat !== undefined);
                 // 更新UI显示
                 this.updatePowerDisplay(powerData);
             }
@@ -613,10 +625,12 @@ class BLEManager {
         }
 
         // 匹配软件版本
-        const softVMatch = /soft_v=([\d.]+)/.exec(text);
+        const softVMatch = /soft_v=(V:[\d.]+)/.exec(text);
         if (softVMatch) {
             params['soft_v'] = softVMatch[1];
             // console.log('解析到软件版本:', params['soft_v']);
+        } else {
+            // console.log('未找到soft_v值');
         }
 
         // 匹配MCU温度
@@ -639,7 +653,7 @@ class BLEManager {
             ocpModeBtn.classList.remove('active');
         }
         // 发送切换到恒流模式的命令
-        this.sendData('power_cc=0');
+        this.sendData('SET_CC=1\r\n');
     }
 
     // 切换到过流模式
@@ -652,7 +666,7 @@ class BLEManager {
             ccModeBtn.classList.remove('active');
         }
         // 发送切换到过流模式的命令
-        this.sendData('power_cc=1');
+        this.sendData('SET_OC=1\r\n');
     }
 
     // 切换输出状态
@@ -930,10 +944,10 @@ class BLEManager {
         }
 
         // 更新芯片电压比
-        if (params.RATIO_SC8815_VOUT !== undefined) {
+        if (params.RATIO_SC8815_VOUT_F !== undefined) {
             const element = document.getElementById('ratio-chip-v');
             if (element) {
-                element.textContent = params.RATIO_SC8815_VOUT.toFixed(3);
+                element.textContent = params.RATIO_SC8815_VOUT_F.toFixed(3);
             }
         }
 

@@ -152,6 +152,23 @@
                 </div>
             </div>
         </section>
+        
+        <!-- 新增：命令发送模块 -->
+        <section class="command-module">
+            <div class="command-container">
+                <select class="command-select" id="command-select">
+                    <option value="">选择命令</option>
+                    <option value="led_allow=1">灯光开</option>
+                    <option value="led_allow=0">灯光关</option>
+                    <option value="beep_allow=1">声音开</option>
+                    <option value="beep_allow=0">声音关</option>
+                    <option value="BLE_READ=1">获取参数</option>
+                    <option value="POWER_OPEN=1">打开输出</option>
+                    <option value="POWER_OPEN=0">关闭输出</option>
+                </select>
+                <button class="btn btn-send" id="send-command-btn">发送</button>
+            </div>
+        </section>
     </div>
 
     <script src="script.js"></script>
